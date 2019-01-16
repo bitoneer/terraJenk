@@ -2,14 +2,14 @@
 set -e -x
 
 # install java
-apt update
-apt install -y openjdk-8-jdk
+sudo apt update
+sudo apt install -y openjdk-8-jdk
 
 # install jenkins
 wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
-echo "deb http://pkg.jenkins.io/debian-stable binary/" >> /etc/apt/sources.list
-apt-get update
-apt-get install -y jenkins=2.150.1
+sudo bash -c 'echo "deb http://pkg.jenkins.io/debian-stable binary/" >> /etc/apt/sources.list'
+sudo apt-get update
+sudo apt-get install -y jenkins=2.150.1
 
 # wait for jenkins up
 while ! nc -z localhost 8080 ; do sleep 1 ; done
@@ -19,6 +19,7 @@ cat > /var/lib/jenkins/jenkins.install.UpgradeWizard.state << EOF
 2.0
 EOF
 
+sudo mkdir /var/lib/jenkins/init.groovy.d/
 sudo sh -c "cat > /var/lib/jenkins/init.groovy.d/basic-security.groovy <<EOF
 #!groovy
 
@@ -28,7 +29,7 @@ import hudson.security.*
 def instance = Jenkins.getInstance()
 
 def hudsonRealm = new HudsonPrivateSecurityRealm(false)
-hudsonRealm.createAccount('{{ jenkins_admin_username }}','{{ jenkins_admin_password }}')
+hudsonRealm.createAccount('admin','admin')
 instance.setSecurityRealm(hudsonRealm)
 
 def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
@@ -48,7 +49,7 @@ sudo service jenkins restart
 while ! nc -z localhost 8080 ; do sleep 1 ; done
 
 # get the admin password
-cp /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar /var/lib/jenkins/jenkins-cli.jar
+sudo cp /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar /var/lib/jenkins/jenkins-cli.jar
 PASS=$(sudo bash -c "cat /var/lib/jenkins/secrets/initialAdminPassword")
 
 
