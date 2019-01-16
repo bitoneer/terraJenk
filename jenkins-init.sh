@@ -2,23 +2,23 @@
 
 # install java
 sudo apt update
-sudo apt install openjdk-8-jdk
+sudo apt install -y openjdk-8-jdk
 
 # install jenkins
 wget -q -O - https://pkg.jenkins.io/debian-stable/jenkins.io.key | sudo apt-key add -
 echo "deb http://pkg.jenkins.io/debian-stable binary/" >> /etc/apt/sources.list
-apt-get update
-apt-get install -y jenkins=2.150.1
+sudo apt-get update
+sudo apt-get install -y jenkins=2.150.1
 
 # wait for jenkins up
 while ! nc -z localhost 8080 ; do sleep 1 ; done
 
 # bypass the startup wizard 
-cat > /var/lib/jenkins/jenkins.install.UpgradeWizard.state << EOF
+sudo cat > /var/lib/jenkins/jenkins.install.UpgradeWizard.state << EOF
 2.0
 EOF
 
-cat > /var/lib/jenkins/init.groovy.d/basic-security.groovy << EOF
+sudo cat > /var/lib/jenkins/init.groovy.d/basic-security.groovy << EOF
 #!groovy
 
 import jenkins.model.*
