@@ -41,7 +41,7 @@ instance.setAuthorizationStrategy(strategy)
 instance.save()
 EOF
 "
-sudo chmod /var/lib/jenkins/init.groovy.d/
+sudo chmod 777 /var/lib/jenkins/init.groovy.d/
 sudo chmod 777 /var/lib/jenkins/init.groovy.d/basic-security.groovy
 
 
