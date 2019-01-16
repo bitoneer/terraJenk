@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e -x
 
+export DEBIAN_FRONTEND=noninteractive
+
 # install java
 sudo apt update
 sudo apt install -y openjdk-8-jdk
@@ -16,8 +18,9 @@ while ! nc -z localhost 8080 ; do sleep 1 ; done
 
 # bypass the startup wizard 
 cat > /var/lib/jenkins/jenkins.install.UpgradeWizard.state << EOF
-2.0
+2.150.1
 EOF
+sudo chmod 777 /var/lib/jenkins/jenkins.install.UpgradeWizard.state
 
 sudo mkdir /var/lib/jenkins/init.groovy.d/
 sudo sh -c "cat > /var/lib/jenkins/init.groovy.d/basic-security.groovy <<EOF
@@ -38,6 +41,9 @@ instance.setAuthorizationStrategy(strategy)
 instance.save()
 EOF
 "
+sudo chmod /var/lib/jenkins/init.groovy.d/
+sudo chmod 777 /var/lib/jenkins/init.groovy.d/basic-security.groovy
+
 
 # set the cli port
 sudo apt install xmlstarlet
