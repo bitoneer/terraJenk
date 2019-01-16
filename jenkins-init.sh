@@ -53,7 +53,7 @@ sudo chmod 777 /var/lib/jenkins/init.groovy.d/basic-security.groovy
 # set the cli port
 sudo apt-get install -y xmlstarlet
 sudo sh -c "xmlstarlet -q ed -u '//slaveAgentPort' -v '49187' /var/lib/jenkins/config.xml > /tmp/jenkins_config.xml"
-sudo sh -c "xmlstarlet --inplace -q ed -u '//installStateName' -v 'NORMAL' /tmp/jenkins_config.xml > /tmp/jenkins_config2.xml"
+sudo sh -c "xmlstarlet -q ed -u '//installStateName' -v 'NORMAL' /tmp/jenkins_config.xml > /tmp/jenkins_config2.xml"
 
 sudo mv /tmp/jenkins_config2.xml /var/lib/jenkins/config.xml
 sudo service jenkins restart
