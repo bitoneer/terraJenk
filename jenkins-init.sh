@@ -18,10 +18,22 @@ sudo bash -c 'echo "deb http://pkg.jenkins.io/debian-stable binary/" >> /etc/apt
 sudo apt-get update
 sudo apt-get install -y jenkins=2.150.1
 
+# install docker
+ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+ sudo add-apt-repository 'deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable'
+ sudo apt-get update
+ sudo apt-get install -y docker
+
+ # install maven
+ sudo apt-get install -y maven
+
 # wait for jenkins up
 while ! nc -z localhost 8080 ; do sleep 1 ; done
 
 # bypass the startup wizard 
+export JENKINS_HOME=/var/lib/jenkins
+export JENKINS_MASTER_EXECUTORS=2
+
 cat > /var/lib/jenkins/jenkins.install.UpgradeWizard.state << EOF
 2.150.1
 EOF
@@ -51,15 +63,14 @@ sudo chmod 777 /var/lib/jenkins/init.groovy.d/basic-security.groovy
 
 
 # set the cli port
-sudo apt-get install -y xmlstarlet
-sudo sh -c "xmlstarlet -q ed -u '//slaveAgentPort' -v '49187' /var/lib/jenkins/config.xml > /tmp/jenkins_config.xml"
 sudo sh -c "xmlstarlet -q ed -u '//installStateName' -v 'NORMAL' /tmp/jenkins_config.xml > /tmp/jenkins_config2.xml"
-
-sudo mv /tmp/jenkins_config2.xml /var/lib/jenkins/config.xml
+sudo -u jenkins sed -i "s@<slaveAgentPort>.*@<slaveAgentPort>49153</slaveAgentPort>@g" /var/lib/jenkins/config.xml
+sudo -u jenkins sed -i "s@<installStateName>.*@<installStateName>NORMAL</installStateName>@g" /var/lib/jenkins/config.xml
 sudo service jenkins restart
 
 # wait for jenkins up
 while ! nc -z localhost 8080 ; do sleep 1 ; done
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/login)" != "200" ]]; do sleep 5; done
 
 # get the admin password
 sudo cp /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar /var/lib/jenkins/jenkins-cli.jar
@@ -67,11 +78,10 @@ sudo cp /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar /var/lib/jenkins/jenkins-
 # Initialization of Plugins
 #
 
-jenkins_plugins=""
+JENKINS_PLUGINS="build-name-setter exclusive-execution"
 
-DEFAULT_PLUGINS="docker-workflow ant build-timeout credentials-binding email-ext github-organization-folder gradle workflow-aggregator ssh-slaves subversion timestamper ws-cleanup"
-
-JENKINS_HOME=/var/lib/jenkins
+# Please try and keep this list alphabetical
+DEFAULT_PLUGINS="blueocean blueocean-github-pipeline blueocean-pipeline-editor blueocean-pipeline-api-impl build-timeout build-name-setter claim copyartifact credentials-binding email-ext git github ghprb github-organization-folder gradle htmlpublisher matrix-auth mailer nunit parameterized-trigger plain-credentials pipeline-stage-view powershell simple-theme-plugin ssh-credentials ssh-slaves timestamper workflow-aggregator ws-cleanup"
 
 if [ -n "${JENKINS_PLUGINS}" ]; then
   JENKINS_PLUGINS=$JENKINS_PLUGINS" "$DEFAULT_PLUGINS
