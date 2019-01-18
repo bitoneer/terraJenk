@@ -73,12 +73,10 @@ sudo service jenkins restart
 while ! nc -z localhost 8080 ; do sleep 1 ; done
 while [[ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/login)" != "200" ]]; do sleep 5; done
 
-# get the admin password
+# copy jenkins cli
 sudo cp /var/cache/jenkins/war/WEB-INF/jenkins-cli.jar /var/lib/jenkins/jenkins-cli.jar
 
 # Initialization of Plugins
-#
-
 JENKINS_PLUGINS="build-name-setter exclusive-execution"
 
 # Please try and keep this list alphabetical
@@ -135,4 +133,13 @@ if (installed) {
 _EOF_
 fi
 
-sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:admin groovy = < /var/lib/jenkins/init.groovy.d/loadPlugins.groovy
+# sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:admin groovy = < /var/lib/jenkins/init.groovy.d/loadPlugins.groovy
+
+echo "Waiting for jenkins to respond..."
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/login)" != "200" ]]; do sleep 5; done
+
+echo "Starting jenkins..."
+service jenkins restart
+
+echo "Waiting for jenkins to respond..."
+while [[ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/login)" != "200" ]]; do sleep 5; done
