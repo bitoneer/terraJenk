@@ -65,7 +65,6 @@ sudo chmod 777 /var/lib/jenkins/init.groovy.d/basic-security.groovy
 
 
 # set the cli port
-sudo sh -c "xmlstarlet -q ed -u '//installStateName' -v 'NORMAL' /tmp/jenkins_config.xml > /tmp/jenkins_config2.xml"
 sudo -u jenkins sed -i "s@<slaveAgentPort>.*@<slaveAgentPort>49153</slaveAgentPort>@g" /var/lib/jenkins/config.xml
 sudo -u jenkins sed -i "s@<installStateName>.*@<installStateName>NORMAL</installStateName>@g" /var/lib/jenkins/config.xml
 sudo service jenkins restart
