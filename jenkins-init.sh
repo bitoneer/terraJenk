@@ -18,6 +18,14 @@ sudo bash -c 'echo "deb http://pkg.jenkins.io/debian-stable binary/" >> /etc/apt
 sudo apt-get update
 sudo apt-get install -y jenkins=2.150.1
 
+# install openjdk 11
+sudo add-apt-repository ppa:openjdk-r/ppa -y
+sudo apt-get update -q 
+sudo apt install -y openjdk-11-jdk
+
+# set default java version back to 8 for jenkins
+sudo update-java-alternatives --set /usr/lib/jvm/java-1.8.0-openjdk-amd64
+
 # install docker
 sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
@@ -28,6 +36,10 @@ sudo apt-get install -y docker-ce
 
 # install maven
 sudo apt-get install -y maven
+
+# add jenkins to docker access
+sudo usermod -aG docker jenkins
+sudo systemctl restart docker
 
 # wait for jenkins up
 while ! nc -z localhost 8080 ; do sleep 1 ; done
@@ -41,6 +53,8 @@ cat > /var/lib/jenkins/jenkins.install.UpgradeWizard.state << EOF
 EOF
 sudo chmod 777 /var/lib/jenkins/jenkins.install.UpgradeWizard.state
 
+initPass="$(sudo cat /var/lib/jenkins/secrets/initialAdminPassword)"
+
 sudo mkdir /var/lib/jenkins/init.groovy.d/
 sudo sh -c "cat > /var/lib/jenkins/init.groovy.d/basic-security.groovy <<EOF
 #!groovy
@@ -51,7 +65,7 @@ import hudson.security.*
 def instance = Jenkins.getInstance()
 
 def hudsonRealm = new HudsonPrivateSecurityRealm(false)
-hudsonRealm.createAccount('admin','admin')
+hudsonRealm.createAccount('admin','$initPass')
 instance.setSecurityRealm(hudsonRealm)
 
 def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
@@ -133,7 +147,7 @@ if (installed) {
 _EOF_
 fi
 
-# sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:admin groovy = < /var/lib/jenkins/init.groovy.d/loadPlugins.groovy
+# sudo java -jar /var/lib/jenkins/jenkins-cli.jar -s http://localhost:8080 -auth admin:$initPass groovy = < /var/lib/jenkins/init.groovy.d/loadPlugins.groovy
 
 echo "Waiting for jenkins to respond..."
 while [[ "$(curl -s -o /dev/null -w '%{http_code}' localhost:8080/login)" != "200" ]]; do sleep 5; done
